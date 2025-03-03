@@ -53,6 +53,8 @@ export interface Listing {
   images: ImageItem[];
   distance?: number;
   amenities?: { title: string; values: { title: string; icon: string; available: boolean }[] }[];
+  latitude: number;
+  longitude:number
 }
 
 interface ApiResponse {

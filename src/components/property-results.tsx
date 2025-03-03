@@ -1,14 +1,52 @@
-'use client';
+"use client";
 
-import { Building, MapPin, Bath, Bed, Home, Info, Loader2, DollarSign, Calendar, Ruler } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Skeleton } from '@/components/ui/skeleton';
-import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { Button } from '@/components/ui/button';
-import Image from 'next/image';
+import {
+  Building,
+  MapPin,
+  Bath,
+  Bed,
+  Home,
+  Info,
+  DollarSign,
+  Calendar,
+  Ruler,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { Button } from "@/components/ui/button";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+
+// Dynamically import Leaflet components with no SSR
+const MapContainer = dynamic(
+  () => import("react-leaflet").then((mod) => mod.MapContainer),
+  { ssr: false }
+);
+const TileLayer = dynamic(
+  () => import("react-leaflet").then((mod) => mod.TileLayer),
+  { ssr: false }
+);
+const Marker = dynamic(
+  () => import("react-leaflet").then((mod) => mod.Marker),
+  { ssr: false }
+);
+const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), {
+  ssr: false,
+});
 
 interface PropertyResultsProps {
   properties: any[];
@@ -16,14 +54,71 @@ interface PropertyResultsProps {
   error: string | null;
 }
 
-export default function PropertyResults({ properties, loading, error }: PropertyResultsProps) {
+export default function PropertyResults({
+  properties,
+  loading,
+  error,
+}: PropertyResultsProps) {
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 0
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
     }).format(price);
   };
+
+  const [zoom, setZoom] = useState(13); // Default zoom level
+  const [isClient, setIsClient] = useState(false);
+
+  const [customIcon, setCustomIcon] = useState<L.Icon | null>(null);
+
+  useEffect(() => {
+    setIsClient(true); // Ensures this runs only on the client
+
+    // Initialize Leaflet icon on client side
+    if (typeof window !== "undefined") {
+      // Import Leaflet dynamically inside useEffect
+      import("leaflet").then((L) => {
+        // Set up default icon manually
+        L.Icon.Default.mergeOptions({
+          iconRetinaUrl:
+            "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
+          iconUrl:
+            "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
+          shadowUrl:
+            "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
+        });
+
+        // Create custom icon
+        setCustomIcon(
+          new L.Icon({
+            iconUrl:
+              "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowUrl:
+              "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
+            shadowSize: [41, 41],
+          })
+        );
+      });
+    }
+  }, []);
+
+  // Ensure that coordinates exist before rendering
+  const hasCoordinates = properties.every(
+    (property) =>
+      property.coordinates?.latitude && property.coordinates?.longitude
+  );
+
+  if (!isClient) {
+    return (
+      <div className="h-[300px] flex items-center justify-center">
+        Loading map...
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -80,30 +175,36 @@ export default function PropertyResults({ properties, loading, error }: Property
                 <div className="flex justify-between items-start">
                   <div>
                     <CardDescription className="flex items-center gap-1">
-                      <MapPin className="h-3 w-3" /> 
-                      {property.address?.street}, {property.address?.locality}, {property.address?.region} {property.address?.postalCode}
+                      <MapPin className="h-3 w-3" />
+                      {property.address?.street}, {property.address?.locality},{" "}
+                      {property.address?.region} {property.address?.postalCode}
                     </CardDescription>
                     <CardTitle className="text-lg">
-                      {property.beds} Bed, {property.baths} Bath {property.sub_type || property.type}
+                      {property.beds} Bed, {property.baths} Bath{" "}
+                      {property.sub_type || property.type}
                     </CardTitle>
                   </div>
                   <TabsList>
                     <TabsTrigger value="details">Details</TabsTrigger>
                     <TabsTrigger value="photos">Photos</TabsTrigger>
                     <TabsTrigger value="history">History</TabsTrigger>
+                    <TabsTrigger value="map">View on Map</TabsTrigger>
                   </TabsList>
                 </div>
               </CardHeader>
-              
+
               <TabsContent value="details">
                 <CardContent>
                   <div className="flex flex-col md:flex-row gap-4">
                     <div className="md:w-[300px] flex-shrink-0">
-                      <AspectRatio ratio={4/3} className="bg-muted rounded-md overflow-hidden">
+                      <AspectRatio
+                        ratio={4 / 3}
+                        className="bg-muted rounded-md overflow-hidden"
+                      >
                         <div className="relative w-full h-full">
                           {property.photos && property.photos.length > 0 ? (
-                            <Image 
-                              src={property.photos[0].href} 
+                            <Image
+                              src={property.photos[0].href}
                               alt={property.address?.street || "Property image"}
                               fill
                               className="object-cover"
@@ -119,31 +220,51 @@ export default function PropertyResults({ properties, loading, error }: Property
                     </div>
                     <div className="flex-1">
                       <div className="flex flex-wrap gap-2 mb-3">
-                        <Badge variant="outline" className="flex items-center gap-1">
-                          <Home className="h-3 w-3" /> {property.sub_type || property.type}
+                        <Badge
+                          variant="outline"
+                          className="flex items-center gap-1"
+                        >
+                          <Home className="h-3 w-3" />{" "}
+                          {property.sub_type || property.type}
                         </Badge>
-                        <Badge variant="outline" className="flex items-center gap-1">
+                        <Badge
+                          variant="outline"
+                          className="flex items-center gap-1"
+                        >
                           <Bed className="h-3 w-3" /> {property.beds} beds
                         </Badge>
-                        <Badge variant="outline" className="flex items-center gap-1">
+                        <Badge
+                          variant="outline"
+                          className="flex items-center gap-1"
+                        >
                           <Bath className="h-3 w-3" /> {property.baths} baths
                         </Badge>
-                        <Badge variant="outline" className="flex items-center gap-1">
+                        <Badge
+                          variant="outline"
+                          className="flex items-center gap-1"
+                        >
                           <Ruler className="h-3 w-3" /> {property.sqft} sqft
                         </Badge>
-                        <Badge variant="outline" className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" /> Built {property.year_built}
+                        <Badge
+                          variant="outline"
+                          className="flex items-center gap-1"
+                        >
+                          <Calendar className="h-3 w-3" /> Built{" "}
+                          {property.year_built}
                         </Badge>
                       </div>
-                      
-                      <p className="text-sm line-clamp-4 mb-3">{property.text}</p>
-                      
+
+                      <p className="text-sm line-clamp-4 mb-3">
+                        {property.text}
+                      </p>
+
                       <div className="text-lg font-bold flex items-center">
                         <DollarSign className="h-5 w-5" />
                         {formatPrice(property.listPrice)}
                         {property.lastSoldPrice && (
                           <span className="text-sm font-normal text-muted-foreground ml-2">
-                            Last sold: {formatPrice(property.lastSoldPrice)} ({new Date(property.soldOn).toLocaleDateString()})
+                            Last sold: {formatPrice(property.lastSoldPrice)} (
+                            {new Date(property.soldOn).toLocaleDateString()})
                           </span>
                         )}
                       </div>
@@ -151,38 +272,47 @@ export default function PropertyResults({ properties, loading, error }: Property
                   </div>
                 </CardContent>
               </TabsContent>
-              
+
               <TabsContent value="photos">
                 <CardContent>
                   <ScrollArea className="h-[400px] rounded-md">
                     <div className="grid grid-cols-2 gap-2">
-                      {property.photos && property.photos.map((photo: any, photoIndex: number) => (
-                        <div key={photoIndex} className="relative rounded-md overflow-hidden">
-                          <AspectRatio ratio={4/3}>
-                            <div className="relative w-full h-full">
-                              <Image 
-                                src={photo.href} 
-                                alt={photo.title || `Property image ${photoIndex + 1}`}
-                                fill
-                                className="object-cover"
-                                priority
-                              />
-                              {photo.tags && photo.tags.length > 0 && (
-                                <div className="absolute bottom-2 left-2">
-                                  <Badge variant="secondary">
-                                    {photo.tags[0].label}
-                                  </Badge>
+                      {property.photos &&
+                        property.photos.map(
+                          (photo: any, photoIndex: number) => (
+                            <div
+                              key={photoIndex}
+                              className="relative rounded-md overflow-hidden"
+                            >
+                              <AspectRatio ratio={4 / 3}>
+                                <div className="relative w-full h-full">
+                                  <Image
+                                    src={photo.href}
+                                    alt={
+                                      photo.title ||
+                                      `Property image ${photoIndex + 1}`
+                                    }
+                                    fill
+                                    className="object-cover"
+                                    priority
+                                  />
+                                  {photo.tags && photo.tags.length > 0 && (
+                                    <div className="absolute bottom-2 left-2">
+                                      <Badge variant="secondary">
+                                        {photo.tags[0].label}
+                                      </Badge>
+                                    </div>
+                                  )}
                                 </div>
-                              )}
+                              </AspectRatio>
                             </div>
-                          </AspectRatio>
-                        </div>
-                      ))}
+                          )
+                        )}
                     </div>
                   </ScrollArea>
                 </CardContent>
               </TabsContent>
-              
+
               <TabsContent value="history">
                 <CardContent>
                   <div className="space-y-4">
@@ -192,68 +322,149 @@ export default function PropertyResults({ properties, loading, error }: Property
                         <table className="w-full">
                           <thead className="bg-muted">
                             <tr>
-                              <th className="px-4 py-2 text-left text-sm font-medium">Date</th>
-                              <th className="px-4 py-2 text-left text-sm font-medium">Event</th>
-                              <th className="px-4 py-2 text-left text-sm font-medium">Price</th>
-                              <th className="px-4 py-2 text-left text-sm font-medium">Source</th>
+                              <th className="px-4 py-2 text-left text-sm font-medium">
+                                Date
+                              </th>
+                              <th className="px-4 py-2 text-left text-sm font-medium">
+                                Event
+                              </th>
+                              <th className="px-4 py-2 text-left text-sm font-medium">
+                                Price
+                              </th>
+                              <th className="px-4 py-2 text-left text-sm font-medium">
+                                Source
+                              </th>
                             </tr>
                           </thead>
                           <tbody className="divide-y">
-                            {property.history.map((event: any, eventIndex: number) => (
-                              <tr key={eventIndex} className={eventIndex % 2 === 0 ? 'bg-background' : 'bg-muted/30'}>
-                                <td className="px-4 py-2 text-sm">
-                                  {new Date(event.date).toLocaleDateString()}
-                                </td>
-                                <td className="px-4 py-2 text-sm">{event.event_name}</td>
-                                <td className="px-4 py-2 text-sm">
-                                  {event.price ? formatPrice(event.price) : '-'}
-                                </td>
-                                <td className="px-4 py-2 text-sm">{event.source_name || '-'}</td>
-                              </tr>
-                            ))}
+                            {property.history.map(
+                              (event: any, eventIndex: number) => (
+                                <tr
+                                  key={eventIndex}
+                                  className={
+                                    eventIndex % 2 === 0
+                                      ? "bg-background"
+                                      : "bg-muted/30"
+                                  }
+                                >
+                                  <td className="px-4 py-2 text-sm">
+                                    {new Date(event.date).toLocaleDateString()}
+                                  </td>
+                                  <td className="px-4 py-2 text-sm">
+                                    {event.event_name}
+                                  </td>
+                                  <td className="px-4 py-2 text-sm">
+                                    {event.price
+                                      ? formatPrice(event.price)
+                                      : "-"}
+                                  </td>
+                                  <td className="px-4 py-2 text-sm">
+                                    {event.source_name || "-"}
+                                  </td>
+                                </tr>
+                              )
+                            )}
                           </tbody>
                         </table>
                       </div>
                     ) : (
-                      <p className="text-muted-foreground">No history available for this property</p>
+                      <p className="text-muted-foreground">
+                        No history available for this property
+                      </p>
                     )}
-                    
-                    {property.nearbySchools && property.nearbySchools.schools && (
-                      <div className="mt-6">
-                        <h3 className="text-lg font-medium mb-2">Nearby Schools</h3>
-                        <div className="space-y-2">
-                          {property.nearbySchools.schools.map((school: any, schoolIndex: number) => (
-                            <div key={schoolIndex} className="border rounded-md p-3">
-                              <div className="flex justify-between">
-                                <div>
-                                  <h4 className="font-medium">{school.name}</h4>
-                                  <p className="text-sm text-muted-foreground">
-                                    {school.education_levels?.join(', ')} • {school.funding_type} • 
-                                    {school.distance_in_miles} miles away
-                                  </p>
+
+                    {property.nearbySchools &&
+                      property.nearbySchools.schools && (
+                        <div className="mt-6">
+                          <h3 className="text-lg font-medium mb-2">
+                            Nearby Schools
+                          </h3>
+                          <div className="space-y-2">
+                            {property.nearbySchools.schools.map(
+                              (school: any, schoolIndex: number) => (
+                                <div
+                                  key={schoolIndex}
+                                  className="border rounded-md p-3"
+                                >
+                                  <div className="flex justify-between">
+                                    <div>
+                                      <h4 className="font-medium">
+                                        {school.name}
+                                      </h4>
+                                      <p className="text-sm text-muted-foreground">
+                                        {school.education_levels?.join(", ")} •{" "}
+                                        {school.funding_type} •
+                                        {school.distance_in_miles} miles away
+                                      </p>
+                                    </div>
+                                    {school.rating && (
+                                      <Badge
+                                        variant={
+                                          school.rating >= 4
+                                            ? "default"
+                                            : "outline"
+                                        }
+                                      >
+                                        Rating: {school.rating}/10
+                                      </Badge>
+                                    )}
+                                  </div>
                                 </div>
-                                {school.rating && (
-                                  <Badge variant={school.rating >= 4 ? "default" : "outline"}>
-                                    Rating: {school.rating}/10
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                          ))}
+                              )
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
                   </div>
                 </CardContent>
               </TabsContent>
-              
+
+              <TabsContent value="map">
+                <CardContent className="h-[300px] relative">
+                  {hasCoordinates && isClient && customIcon ? (
+                    <MapContainer
+                      center={[
+                        property.coordinates.latitude,
+                        property.coordinates.longitude,
+                      ]}
+                      zoom={zoom}
+                      className="h-full w-full rounded-md"
+                    >
+                      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                      <Marker
+                        position={[
+                          property.coordinates.latitude,
+                          property.coordinates.longitude,
+                        ]}
+                        icon={customIcon}
+                      >
+                        <Popup>
+                          <strong>{property.title}</strong>
+                          <p>{property.locationSubtitle}</p>
+                        </Popup>
+                      </Marker>
+                    </MapContainer>
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-muted-foreground">
+                      <p>Location not available</p>
+                    </div>
+                  )}
+
+                  {/* Zoom Controls */}
+                </CardContent>
+              </TabsContent>
+
               <CardFooter className="flex justify-between">
                 <div className="flex items-center text-sm text-muted-foreground">
                   <Info className="h-4 w-4 mr-1" />
                   <span>Property ID: {property.id}</span>
                 </div>
                 <Button asChild>
-                  <a href={property.url} target="_blank" rel="noopener noreferrer">
+                  <a
+                    href={property.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     View on Realtor.com
                   </a>
                 </Button>
