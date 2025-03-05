@@ -1,65 +1,96 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-// 🔥 Example: County to GEOID mapping
-const COUNTY_GEOID_MAP: Record<string, string> = {
-  "Socorro County, New Mexico": "35053", // 🔥 FIPS Code for Socorro County, NM
-};
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const year = searchParams.get('year');
+  const stateName = searchParams.get('state');
+  const countyName = searchParams.get('county');
 
-const HUD_API_URL = "https://www.huduser.gov/hudapi/public/usps";
-const HUD_API_TOKEN = process.env.HUD_API_TOKEN; // Ensure it's in .env.local
-
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const state = searchParams.get("state") || "";
-  const county = searchParams.get("county") || "";
-
-  if (!state || !county) {
+  if (!year || !stateName || !countyName) {
     return NextResponse.json(
-      { error: "State and County are required" },
-      { status: 400 }
-    );
-  }
-
-  const countyKey = `${county}, ${state}`;
-  const geoid = COUNTY_GEOID_MAP[countyKey];
-
-  if (!geoid) {
-    return NextResponse.json(
-      { error: "Invalid County or GEOID not found" },
+      { error: 'Year, state, and county are required' },
       { status: 400 }
     );
   }
 
   try {
-    const url = `${HUD_API_URL}?type=7&query=${geoid}`;
-    console.log("HUD API Request URL:", url);
-
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${HUD_API_TOKEN}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    const data = await response.json();
-
-    if (!data || !data.data?.results) {
-      throw new Error("Invalid response from HUD API");
+    const token = process.env.HUD_API_TOKEN;
+    if (!token) {
+      throw new Error('HUD API token is missing');
     }
 
-    // 🔥 Extract useful info only
-    const formattedResults = data.data.results.map((item: any) => ({
-      city: item.city,
-      state: item.state,
-      zipGEOID: item.geoid,
-      residentialRatio: item.res_ratio,
-      businessRatio: item.bus_ratio,
-      totalRatio: item.tot_ratio,
-    }));
+    // Step 1: Get state_code from state name
+    const statesResponse = await fetch(
+      'https://www.huduser.gov/hudapi/public/fmr/listStates',
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    if (!statesResponse.ok) {
+      throw new Error(`Failed to fetch states: ${statesResponse.statusText}`);
+    }
+    const statesData = await statesResponse.json();
+    console.log('States Response:', statesData); // Log the response
 
-    return NextResponse.json({ results: formattedResults });
-  } catch (error: any) {
-    console.error("HUD API Error:", error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    // Find the state by name
+    const state = statesData.find(
+      (s: any) => s.state_name.toLowerCase() === stateName.toLowerCase()
+    );
+    if (!state) {
+      return NextResponse.json(
+        { error: 'State not found' },
+        { status: 404 }
+      );
+    }
+
+    // Step 2: Get entityid (FIPS code) from county name
+    const countiesResponse = await fetch(
+      `https://www.huduser.gov/hudapi/public/fmr/listCounties/${state.state_code}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    if (!countiesResponse.ok) {
+      throw new Error(`Failed to fetch counties: ${countiesResponse.statusText}`);
+    }
+    const countiesData = await countiesResponse.json();
+    console.log('Counties Response:', countiesData); // Log the response
+
+    // Find the county by name
+    const county = countiesData.find(
+      (c: any) => c.county_name.toLowerCase() === countyName.toLowerCase()
+    );
+    if (!county) {
+      return NextResponse.json(
+        { error: 'County not found' },
+        { status: 404 }
+      );
+    }
+
+    // Step 3: Fetch FMR data
+    const fmrResponse = await fetch(
+      `https://www.huduser.gov/hudapi/public/fmr/data/${county.fips_code}?year=${year}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    if (!fmrResponse.ok) {
+      throw new Error(`Failed to fetch FMR data: ${fmrResponse.statusText}`);
+    }
+    const fmrData = await fmrResponse.json();
+    console.log('FMR Response:', fmrData); // Log the response
+
+    return NextResponse.json(fmrData);
+  } catch (error:any) {
+    return NextResponse.json(
+      { error: 'Failed to fetch data', details: error.message },
+      { status: 500 }
+    );
   }
 }
