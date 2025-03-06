@@ -41,7 +41,7 @@ export async function POST(request: Request) {
       searchCoordinates: [],
       searchArea: "0.25",
       maxItems: 20,
-
+ // eslint-disable-next-line @typescript-eslint/no-unused-vars
       extendOutputFunction: (_$: unknown) => ({}),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       customMapFunction: (object: any) => ({ ...object }),
