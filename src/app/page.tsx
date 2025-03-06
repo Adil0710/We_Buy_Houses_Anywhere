@@ -48,6 +48,7 @@ export default function Home() {
   const [propertyUrl, setPropertyUrl] = useState("");
   const [propertyLoading, setPropertyLoading] = useState(false);
   const [propertyError, setPropertyError] = useState<string | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [propertyData, setPropertyData] = useState<any[]>([]);
 
   useEffect(() => {

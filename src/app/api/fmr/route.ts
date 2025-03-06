@@ -35,6 +35,7 @@ export async function GET(request: Request) {
 
     // Find the state by name
     const state = statesData.find(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (s: any) => s.state_name.toLowerCase() === stateName.toLowerCase()
     );
     if (!state) {
@@ -59,6 +60,7 @@ export async function GET(request: Request) {
 
     // Find the county by name
     const county = countiesData.find(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (c: any) => c.county_name.toLowerCase() === countyName.toLowerCase()
     );
     if (!county) {
@@ -80,7 +82,7 @@ export async function GET(request: Request) {
     const fmrData = await fmrResponse.json();
 
     return NextResponse.json(fmrData);
-   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     return NextResponse.json(
       { error: "Failed to fetch data", details: error.message },

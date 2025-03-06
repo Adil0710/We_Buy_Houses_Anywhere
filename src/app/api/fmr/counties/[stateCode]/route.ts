@@ -25,6 +25,7 @@ export async function GET(
 
     const data = await response.json();
     return NextResponse.json(data);
+     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     return NextResponse.json(
       { error: "Failed to fetch counties", details: error.message },
