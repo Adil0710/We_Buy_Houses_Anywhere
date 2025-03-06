@@ -1,6 +1,6 @@
 // app/api/scrape-furnishedfinder/route.ts
-import { NextResponse } from 'next/server';
-import { ApifyClient } from 'apify-client';
+import { NextResponse } from "next/server";
+import { ApifyClient } from "apify-client";
 
 // Initialize Apify client with environment variable
 const client = new ApifyClient({
@@ -31,9 +31,9 @@ export async function POST(request: Request) {
     }
     url += "/Avail"; // Append default availability parameter
 
-    console.log(url)
-    const startUrls = [ url ];
-    console.log(startUrls)
+    console.log(url);
+    const startUrls = [url];
+    console.log(startUrls);
 
     // Prepare Actor input with default values
     const input = {
@@ -41,11 +41,13 @@ export async function POST(request: Request) {
       searchCoordinates: [],
       searchArea: "0.25",
       maxItems: 20,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any @typescript-eslint/no-unused-vars
       extendOutputFunction: ($: any) => ({}),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       customMapFunction: (object: any) => ({ ...object }),
       proxy: {
-        useApifyProxy: true
-      }
+        useApifyProxy: true,
+      },
     };
 
     // Run the Apify actor
@@ -55,9 +57,9 @@ export async function POST(request: Request) {
     const { items } = await client.dataset(run.defaultDatasetId).listItems();
 
     return NextResponse.json({ data: items }, { status: 200 });
-
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    console.error('Scraping error:', error);
+    console.error("Scraping error:", error);
     return NextResponse.json(
       { error: "Failed to scrape data", details: error.message },
       { status: 500 }
