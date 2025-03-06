@@ -1,57 +1,65 @@
-import { ApifyClient } from "apify-client";
-import { NextResponse } from "next/server";
+// app/api/scrape-furnishedfinder/route.ts
+import { NextResponse } from 'next/server';
+import { ApifyClient } from 'apify-client';
 
-const client = new ApifyClient({ token: process.env.APIFY_TOKEN });
+// Initialize Apify client with environment variable
+const client = new ApifyClient({
+  token: process.env.APIFY_TOKEN,
+});
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    const body = await req.json();
-    const { location } = body;
+    // Get input parameters from request body
+    const { city, state, budget, moveInDate } = await request.json();
 
-    if (!location) {
+    // Validate required parameters
+    if (!city || !state) {
       return NextResponse.json(
-        { error: "Location is required" },
+        { error: "City and State are required fields" },
         { status: 400 }
       );
     }
 
-    // Construct the dynamic start URL based on user input
-    const formattedLocation = location.replace(/\s+/g, "/"); // Replace spaces with slashes
-    const startUrl = `https://www.furnishedfinder.com/housing/${formattedLocation}`;
+    // Construct dynamic URL based on user input
+    let url = `https://www.furnishedfinder.com/housing/${city}/${state}`;
 
-    // Set up actor input
+    if (budget) {
+      url += `/Budget${budget}`;
+    }
+    if (moveInDate) {
+      url += `/MoveIndate${moveInDate}`;
+    }
+    url += "/Avail"; // Append default availability parameter
+
+    console.log(url)
+    const startUrls = [ url ];
+    console.log(startUrls)
+
+    // Prepare Actor input with default values
     const input = {
-      startUrls: [startUrl],
+      startUrls,
       searchCoordinates: [],
       searchArea: "0.25",
       maxItems: 20,
-      extendOutputFunction: "(object) => { return object }",
-      customMapFunction: "(object) => { return object }",
-      proxy: { useApifyProxy: true },
+      extendOutputFunction: ($: any) => ({}),
+      customMapFunction: (object: any) => ({ ...object }),
+      proxy: {
+        useApifyProxy: true
+      }
     };
 
-    // Start Apify Actor
+    // Run the Apify actor
     const run = await client.actor("EL1zje7r1fdkIPc20").call(input);
 
-    if (!run || !run.defaultDatasetId) {
-      throw new Error("Failed to start Apify Actor");
-    }
+    // Get results from dataset
+    const { items } = await client.dataset(run.defaultDatasetId).listItems();
 
-    // Fetch dataset results
-    const results = await client.dataset(run.defaultDatasetId).listItems();
+    return NextResponse.json({ data: items }, { status: 200 });
 
-    if (!results.items || results.items.length === 0) {
-      return NextResponse.json(
-        { success: false, message: "No data found for the given location." },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({ success: true, data: results.items });
-  } catch (error) {
-    console.error("Scraping Error:", error);
+  } catch (error: any) {
+    console.error('Scraping error:', error);
     return NextResponse.json(
-      { error: "Failed to fetch furnishedfinder property details" },
+      { error: "Failed to scrape data", details: error.message },
       { status: 500 }
     );
   }
