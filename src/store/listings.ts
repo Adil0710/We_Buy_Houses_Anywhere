@@ -57,11 +57,6 @@ export interface Listing {
   longitude:number
 }
 
-interface ApiResponse {
-  success: boolean;
-  listings: Listing[];
-}
-
 interface PaginationState {
   currentPage: number;
   itemsPerPage: number;

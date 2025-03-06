@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, MapPin, Star, Info, Users, ZoomIn, ZoomOut } from "lucide-react";
+import { Home, MapPin, Star, Info, Users } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -30,7 +30,7 @@ import {
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
-import L from 'leaflet';
+import L from "leaflet";
 
 // Dynamically import Leaflet components with no SSR
 const MapContainer = dynamic(
@@ -45,10 +45,9 @@ const Marker = dynamic(
   () => import("react-leaflet").then((mod) => mod.Marker),
   { ssr: false }
 );
-const Popup = dynamic(
-  () => import("react-leaflet").then((mod) => mod.Popup),
-  { ssr: false }
-);
+const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), {
+  ssr: false,
+});
 
 export default function ListingResults() {
   const {
@@ -61,35 +60,39 @@ export default function ListingResults() {
     allListings,
   } = useListingStore();
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [zoom, setZoom] = useState(13); // Default zoom level
   const [isClient, setIsClient] = useState(false);
- 
-  
+
   const [customIcon, setCustomIcon] = useState<L.Icon | null>(null);
 
   useEffect(() => {
     setIsClient(true); // Ensures this runs only on the client
-    
+
     // Initialize Leaflet icon on client side
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       // Import Leaflet dynamically inside useEffect
-      import('leaflet').then((L) => {
-        
+      import("leaflet").then((L) => {
         // Set up default icon manually
         L.Icon.Default.mergeOptions({
-          iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
-          iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-          shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+          iconRetinaUrl:
+            "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
+          iconUrl:
+            "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
+          shadowUrl:
+            "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
         });
-        
+
         // Create custom icon
         setCustomIcon(
           new L.Icon({
-            iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
+            iconUrl:
+              "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
             iconSize: [25, 41],
             iconAnchor: [12, 41],
             popupAnchor: [1, -34],
-            shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
+            shadowUrl:
+              "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
             shadowSize: [41, 41],
           })
         );
@@ -177,12 +180,12 @@ export default function ListingResults() {
 
     return items;
   };
-  
+
   // Ensure that coordinates exist before rendering
   const hasCoordinates = listings.every(
     (listing) => listing.coordinates?.latitude && listing.coordinates?.longitude
   );
-  
+
   if (loading) {
     return (
       <div className="max-w-3xl mx-auto grid gap-6">
@@ -403,7 +406,6 @@ export default function ListingResults() {
                   )}
 
                   {/* Zoom Controls */}
-                  
                 </CardContent>
               </TabsContent>
 

@@ -24,14 +24,17 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { IoHomeOutline } from "react-icons/io5";
 import { FaAirbnb } from "react-icons/fa6";
+import { TbHomeDollar } from "react-icons/tb";
 import { ModeToggle } from "@/components/dark-light-toggle";
+import { FMRSearch } from "@/components/fmr-search";
+import { FMRDataTable } from "@/components/fmr-data-table";
 
 export default function Home() {
   const { toast } = useToast();
   const {
     location,
     setLocation,
-    listings,
+
     loading,
     error,
     searchListings,
@@ -40,6 +43,7 @@ export default function Home() {
     allListings,
   } = useListingStore();
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [searchType, setSearchType] = useState<"airbnb" | "property">("airbnb");
   const [propertyUrl, setPropertyUrl] = useState("");
   const [propertyLoading, setPropertyLoading] = useState(false);
@@ -140,7 +144,7 @@ export default function Home() {
             <HomeNew className="h-6 w-6 text-primary" />
             <h1 className="text-xl font-bold">We Buy Houses Anywhere</h1>
           </div>
-          <ModeToggle/>
+          <ModeToggle />
         </div>
       </header>
 
@@ -151,7 +155,7 @@ export default function Home() {
             setSearchType(value as "airbnb" | "property")
           }
         >
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-3 mb-6">
             <TabsTrigger value="airbnb">
               <FaAirbnb className=" mr-2" />
               Airbnb Listings
@@ -159,6 +163,10 @@ export default function Home() {
             <TabsTrigger value="property">
               <IoHomeOutline className=" mr-2" />
               Property Details
+            </TabsTrigger>
+            <TabsTrigger value="fmr">
+              <TbHomeDollar className=" mr-2" />
+              HUD FMR
             </TabsTrigger>
           </TabsList>
 
@@ -266,6 +274,15 @@ export default function Home() {
               loading={propertyLoading}
               error={propertyError}
             />
+          </TabsContent>
+
+          <TabsContent value="fmr">
+            <div className="max-w-3xl mx-auto mb-8">
+              <FMRSearch />
+              <div className="mt-8">
+                <FMRDataTable />
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </main>

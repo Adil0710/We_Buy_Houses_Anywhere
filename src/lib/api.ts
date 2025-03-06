@@ -3,38 +3,40 @@
 export async function getListings(location: string) {
   try {
     // Call the actual Next.js API endpoint
-    const response = await fetch(`/api/scrape?location=${encodeURIComponent(location)}`);
-    
+    const response = await fetch(
+      `/api/scrape?location=${encodeURIComponent(location)}`
+    );
+
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to fetch listings');
+      throw new Error(errorData.error || "Failed to fetch listings");
     }
-    
+
     return await response.json();
   } catch (error) {
-    console.error('Error fetching listings:', error);
+    console.error("Error fetching listings:", error);
     throw error;
   }
 }
 
 export async function getPropertyDetails(urls: string[]) {
   try {
-    const response = await fetch('/api/property-details', {
-      method: 'POST',
+    const response = await fetch("/api/property-details", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ urls }),
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to fetch property details');
+      throw new Error(errorData.error || "Failed to fetch property details");
     }
 
     return await response.json();
   } catch (error) {
-    console.error('Error fetching property details:', error);
+    console.error("Error fetching property details:", error);
     throw error;
   }
 }

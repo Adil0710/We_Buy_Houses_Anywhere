@@ -1,14 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const year = searchParams.get('year');
-  const stateName = searchParams.get('state');
-  const countyName = searchParams.get('county');
+  const year = searchParams.get("year");
+  const stateName = searchParams.get("state");
+  const countyName = searchParams.get("county");
 
   if (!year || !stateName || !countyName) {
     return NextResponse.json(
-      { error: 'Year, state, and county are required' },
+      { error: "Year, state, and county are required" },
       { status: 400 }
     );
   }
@@ -16,12 +16,12 @@ export async function GET(request: Request) {
   try {
     const token = process.env.HUD_API_TOKEN;
     if (!token) {
-      throw new Error('HUD API token is missing');
+      throw new Error("HUD API token is missing");
     }
 
     // Step 1: Get state_code from state name
     const statesResponse = await fetch(
-      'https://www.huduser.gov/hudapi/public/fmr/listStates',
+      "https://www.huduser.gov/hudapi/public/fmr/listStates",
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -32,17 +32,13 @@ export async function GET(request: Request) {
       throw new Error(`Failed to fetch states: ${statesResponse.statusText}`);
     }
     const statesData = await statesResponse.json();
-    console.log('States Response:', statesData); // Log the response
 
     // Find the state by name
     const state = statesData.find(
       (s: any) => s.state_name.toLowerCase() === stateName.toLowerCase()
     );
     if (!state) {
-      return NextResponse.json(
-        { error: 'State not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "State not found" }, { status: 404 });
     }
 
     // Step 2: Get entityid (FIPS code) from county name
@@ -55,20 +51,18 @@ export async function GET(request: Request) {
       }
     );
     if (!countiesResponse.ok) {
-      throw new Error(`Failed to fetch counties: ${countiesResponse.statusText}`);
+      throw new Error(
+        `Failed to fetch counties: ${countiesResponse.statusText}`
+      );
     }
     const countiesData = await countiesResponse.json();
-    console.log('Counties Response:', countiesData); // Log the response
 
     // Find the county by name
     const county = countiesData.find(
       (c: any) => c.county_name.toLowerCase() === countyName.toLowerCase()
     );
     if (!county) {
-      return NextResponse.json(
-        { error: 'County not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "County not found" }, { status: 404 });
     }
 
     // Step 3: Fetch FMR data
@@ -84,12 +78,12 @@ export async function GET(request: Request) {
       throw new Error(`Failed to fetch FMR data: ${fmrResponse.statusText}`);
     }
     const fmrData = await fmrResponse.json();
-    console.log('FMR Response:', fmrData); // Log the response
 
     return NextResponse.json(fmrData);
-  } catch (error:any) {
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
     return NextResponse.json(
-      { error: 'Failed to fetch data', details: error.message },
+      { error: "Failed to fetch data", details: error.message },
       { status: 500 }
     );
   }

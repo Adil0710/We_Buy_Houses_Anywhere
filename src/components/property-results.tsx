@@ -49,6 +49,7 @@ const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), {
 });
 
 interface PropertyResultsProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   properties: any[];
   loading: boolean;
   error: string | null;
@@ -66,7 +67,7 @@ export default function PropertyResults({
       maximumFractionDigits: 0,
     }).format(price);
   };
-
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [zoom, setZoom] = useState(13); // Default zoom level
   const [isClient, setIsClient] = useState(false);
 
@@ -279,6 +280,7 @@ export default function PropertyResults({
                     <div className="grid grid-cols-2 gap-2">
                       {property.photos &&
                         property.photos.map(
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           (photo: any, photoIndex: number) => (
                             <div
                               key={photoIndex}
@@ -338,6 +340,7 @@ export default function PropertyResults({
                           </thead>
                           <tbody className="divide-y">
                             {property.history.map(
+                              // eslint-disable-next-line @typescript-eslint/no-explicit-any
                               (event: any, eventIndex: number) => (
                                 <tr
                                   key={eventIndex}
@@ -381,6 +384,7 @@ export default function PropertyResults({
                           </h3>
                           <div className="space-y-2">
                             {property.nearbySchools.schools.map(
+                              // eslint-disable-next-line @typescript-eslint/no-explicit-any
                               (school: any, schoolIndex: number) => (
                                 <div
                                   key={schoolIndex}
