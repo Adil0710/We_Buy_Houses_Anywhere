@@ -45,7 +45,7 @@ export default function Home() {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [searchType, setSearchType] = useState<"airbnb" | "property">("airbnb");
-  const [propertyUrl, setPropertyUrl] = useState("");
+  const [locationCity, setLocationCity] = useState("");
   const [propertyLoading, setPropertyLoading] = useState(false);
   const [propertyError, setPropertyError] = useState<string | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -91,31 +91,16 @@ export default function Home() {
     }
   };
 
-  const handlePropertySearch = async () => {
-    if (!propertyUrl.trim()) {
-      toast({
-        title: "URL required",
-        description: "Please enter a Realtor.com property URL",
-        variant: "destructive",
-      });
-      return;
-    }
+  
 
-    if (!propertyUrl.includes("realtor.com")) {
-      toast({
-        title: "Invalid URL",
-        description: "Please enter a valid Realtor.com property URL",
-        variant: "destructive",
-      });
-      return;
-    }
+   
 
     setPropertyLoading(true);
     setPropertyError(null);
 
     try {
       const { getPropertyDetails } = await import("@/lib/api");
-      const result = await getPropertyDetails([propertyUrl]);
+      const result = await getPropertyDetails(locationCity, mode);
       setPropertyData(result.properties || []);
 
       if (result.properties && result.properties.length > 0) {

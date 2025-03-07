@@ -6,6 +6,7 @@ const nextConfig = {
       { hostname: "source.unsplash.com" },
       { hostname: "ap.rdcpix.com" },
       { hostname: "nh.rdcpix.com" },
+      { hostname: "ar.rdcpix.com" },
     ],
   },
 };

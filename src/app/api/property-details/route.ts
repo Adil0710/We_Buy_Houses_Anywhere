@@ -1,25 +1,35 @@
 import { ApifyClient } from "apify-client";
 import { NextResponse } from "next/server";
-import { isValidUrl } from "@/lib/validURL";
+
+
 const client = new ApifyClient({ token: process.env.APIFY_TOKEN });
 
 export async function POST(req: Request) {
   try {
-    const { urls } = await req.json();
+    const { location, mode } = await req.json();
 
-    if (!Array.isArray(urls) || urls.length === 0 || !urls.every(isValidUrl)) {
+    if (!location || !["BUY", "RENT"].includes(mode)) {
       return NextResponse.json(
-        { error: "Valid URLs are required" },
+        { error: "Valid location and mode (BUY or RENT) are required" },
         { status: 400 }
       );
     }
+
+    // Construct URLs dynamically
+    const baseUrl =
+      mode === "BUY"
+        ? `https://www.realtor.com/realestateandhomes-search/${location}`
+        : `https://www.realtor.com/apartments/${location}`;
+
+    const urls = [baseUrl]; // Keeping URLs as an array
+
 
     const input = {
       startUrls: urls,
       includeFloorplans: false,
       maxItems: 5,
       endPage: 1,
-      mode: "BUY",
+      mode,
       extendOutputFunction: () => ({}),
       proxy: { useApifyProxy: true },
     };

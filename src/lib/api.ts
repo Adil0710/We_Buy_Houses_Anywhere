@@ -19,14 +19,19 @@ export async function getListings(location: string) {
   }
 }
 
-export async function getPropertyDetails(urls: string[]) {
+export async function getPropertyDetails(locationCity: string, mode: string) {
   try {
+    // Format location for API (e.g., "Las Vegas, NV" -> "Las-Vegas_NV")
+    const formattedLocation = locationCity
+      .replace(/, /g, '_')
+      .replace(/ /g, '-');
+
     const response = await fetch("/api/property-details", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ urls }),
+      body: JSON.stringify({ locationCity: formattedLocation, mode }),
     });
 
     if (!response.ok) {
@@ -39,4 +44,4 @@ export async function getPropertyDetails(urls: string[]) {
     console.error("Error fetching property details:", error);
     throw error;
   }
-}
+} 

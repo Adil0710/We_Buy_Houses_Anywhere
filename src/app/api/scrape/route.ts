@@ -2,9 +2,11 @@ import { ApifyClient } from "apify-client";
 import { NextResponse } from "next/server";
 
 const client = new ApifyClient({ token: process.env.APIFY_TOKEN });
+const cache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
 
 function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
-  const R = 6371; 
+  const R = 6371;
   const dLat = (lat2 - lat1) * (Math.PI / 180);
   const dLon = (lon2 - lon1) * (Math.PI / 180);
   const a =
@@ -28,6 +30,15 @@ export async function GET(req: Request) {
         { status: 400 }
       );
     }
+
+    // Check if the location is cached
+    const cachedData = cache.get(location);
+    if (cachedData && Date.now() - cachedData.timestamp < CACHE_DURATION) {
+      console.log(`Serving cached data for: ${location}`);
+      return NextResponse.json({ success: true, listings: cachedData.data }, { status: 200 });
+    }
+
+    console.log(`Fetching new data for: ${location}`);
 
     const input = {
       locationQueries: [location],
@@ -73,6 +84,9 @@ export async function GET(req: Request) {
       .sort((a, b) => a.distance - b.distance)
       .slice(0, 50);
 
+    // Cache the response for this location
+    cache.set(location, { data: sortedListings, timestamp: Date.now() });
+
     return NextResponse.json(
       { success: true, listings: sortedListings },
       { status: 200 }
@@ -85,3 +99,4 @@ export async function GET(req: Request) {
     );
   }
 }
+  
