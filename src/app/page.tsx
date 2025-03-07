@@ -7,6 +7,7 @@ import {
   Home as HomeNew,
   Loader2,
   Building,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +22,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { IoHomeOutline } from "react-icons/io5";
 import { FaAirbnb } from "react-icons/fa6";
@@ -28,6 +38,9 @@ import { TbHomeDollar } from "react-icons/tb";
 import { ModeToggle } from "@/components/dark-light-toggle";
 import { FMRSearch } from "@/components/fmr-search";
 import { FMRDataTable } from "@/components/fmr-data-table";
+import { CaretSortIcon } from "@radix-ui/react-icons";
+import { usCities } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 export default function Home() {
   const { toast } = useToast();
@@ -50,6 +63,8 @@ export default function Home() {
   const [propertyError, setPropertyError] = useState<string | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [propertyData, setPropertyData] = useState<any[]>([]);
+  const [mode, setMode] = useState("RENT");
+  const [stateOpen, setStateOpen] = useState(false);
 
   useEffect(() => {
     if (error) {
@@ -91,15 +106,13 @@ export default function Home() {
     }
   };
 
-  
-
-   
-
+  const handlePropertySearch = async () => {
     setPropertyLoading(true);
     setPropertyError(null);
 
     try {
       const { getPropertyDetails } = await import("@/lib/api");
+      console.log(locationCity, mode);
       const result = await getPropertyDetails(locationCity, mode);
       setPropertyData(result.properties || []);
 
@@ -216,43 +229,90 @@ export default function Home() {
 
           <TabsContent value="property">
             <div className="max-w-3xl mx-auto mb-8">
-              <h2 className="text-2xl font-bold mb-4">
-                Search for property details
-              </h2>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input
-                    placeholder="Enter a Realtor.com property URL"
-                    value={propertyUrl}
-                    onChange={(e) => setPropertyUrl(e.target.value)}
-                    className="pl-10"
-                    onKeyDown={(e) =>
-                      e.key === "Enter" && handlePropertySearch()
-                    }
-                  />
-                </div>
-                <Button
-                  onClick={handlePropertySearch}
-                  disabled={propertyLoading}
-                >
-                  {propertyLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Searching
-                    </>
-                  ) : (
-                    <>
-                      <Search className="mr-2 h-4 w-4" />
-                      Search
-                    </>
-                  )}
-                </Button>
-              </div>
-              <p className="text-sm text-muted-foreground mt-2">
-                Example:
-                https://www.realtor.com/realestateandhomes-detail/2282-E-Desert-Inn-Rd_Las-Vegas_NV_89169_M11585-75304
-              </p>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-2xl flex items-center gap-2">
+                    <Building className="h-6 w-6" />
+                    Search for Realtor property details
+
+                  </CardTitle>
+                  <CardDescription>
+                    Select a mode and city to view FMR data
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Select value={mode} onValueChange={setMode}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select mode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="RENT">Rent</SelectItem>
+                <SelectItem value="BUY">Buy</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Popover open={stateOpen} onOpenChange={setStateOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={stateOpen}
+                      className="w-full justify-between"
+                      disabled={loading}
+                    >
+                      {locationCity ? locationCity : "Select city..."}
+                      <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0">
+                    <Command>
+                      <CommandInput placeholder="Search city..." className="h-9" />
+                      <CommandEmpty>No city found.</CommandEmpty>
+                      <CommandGroup className="max-h-[300px] overflow-auto">
+                        {usCities.map((city) => (
+                          <CommandItem
+                            key={city}
+                            value={city}
+                            onSelect={() => {
+                              setLocationCity(city);
+                              setStateOpen(false);
+                            }}
+                          >
+                            {city}
+                            <Check
+                              className={cn(
+                                "ml-auto h-4 w-4",
+                                locationCity === city ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+
+                    
+                    <Button
+                      onClick={handlePropertySearch}
+                      disabled={propertyLoading}
+                    >
+                      {propertyLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Searching
+                        </>
+                      ) : (
+                        <>
+                          <Search className="mr-2 h-4 w-4" />
+                          Search
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             <PropertyResults

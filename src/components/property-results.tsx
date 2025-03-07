@@ -424,7 +424,7 @@ export default function PropertyResults({
               </TabsContent>
 
               <TabsContent value="map">
-                <CardContent className="h-[300px] relative">
+                <CardContent className="h-[300px] relative z-0">
                   {hasCoordinates && isClient && customIcon ? (
                     <MapContainer
                       center={[

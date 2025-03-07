@@ -8,12 +8,13 @@ export async function POST(req: Request) {
   try {
     const { location, mode } = await req.json();
 
-    if (!location || !["BUY", "RENT"].includes(mode)) {
+    if (!location ) {
       return NextResponse.json(
         { error: "Valid location and mode (BUY or RENT) are required" },
         { status: 400 }
       );
     }
+    
 
     // Construct URLs dynamically
     const baseUrl =
