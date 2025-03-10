@@ -22,9 +22,7 @@ export async function getListings(location: string) {
 export async function getPropertyDetails(location: string, mode: string) {
   try {
     // Format location for API (e.g., "Las Vegas, NV" -> "Las-Vegas_NV")
-    const formattedLocation = location
-      .replace(/, /g, '_')
-      .replace(/ /g, '-');
+    const formattedLocation = location.replace(/, /g, "_").replace(/ /g, "-");
 
     const response = await fetch("/api/property-details", {
       method: "POST",
@@ -44,58 +42,29 @@ export async function getPropertyDetails(location: string, mode: string) {
     console.error("Error fetching property details:", error);
     throw error;
   }
-} 
+}
 
-export const usCities = [
-  "New York, NY",
-  "Los Angeles, CA",
-  "Chicago, IL",
-  "Houston, TX",
-  "Phoenix, AZ",
-  "Philadelphia, PA",
-  "San Antonio, TX",
-  "San Diego, CA",
-  "Dallas, TX",
-  "San Jose, CA",
-  "Austin, TX",
-  "Jacksonville, FL",
-  "Fort Worth, TX",
-  "Columbus, OH",
-  "Charlotte, NC",
-  "San Francisco, CA",
-  "Indianapolis, IN",
-  "Seattle, WA",
-  "Denver, CO",
-  "Boston, MA",
-  "El Paso, TX",
-  "Detroit, MI",
-  "Nashville, TN",
-  "Portland, OR",
-  "Memphis, TN",
-  "Oklahoma City, OK",
-  "Las Vegas, NV",
-  "Louisville, KY",
-  "Baltimore, MD",
-  "Milwaukee, WI",
-  "Albuquerque, NM",
-  "Tucson, AZ",
-  "Fresno, CA",
-  "Sacramento, CA",
-  "Atlanta, GA",
-  "Kansas City, MO",
-  "Miami, FL",
-  "Raleigh, NC",
-  "Omaha, NE",
-  "Minneapolis, MN",
-  "Cleveland, OH",
-  "Tulsa, OK",
-  "Oakland, CA",
-  "Tampa, FL",
-  "Arlington, TX",
-  "New Orleans, LA",
-  "Wichita, KS",
-  "Bakersfield, CA",
-  "Aurora, CO",
-  "Anaheim, CA",
-  // Add hundreds more cities here...
-];
+export async function getFurnishedFinderDetails(city: string, state: string) {
+  try {
+    // Format city for API (e.g., "Las Vegas County" -> "Las-Vegas")
+    const formattedCity = city.replace(/ /g, "-");
+
+    const response = await fetch("/api/property-details", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ city: formattedCity, state }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to fetch property details");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching property details:", error);
+    throw error;
+  }
+}

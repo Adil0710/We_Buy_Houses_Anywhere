@@ -39,8 +39,9 @@ import { ModeToggle } from "@/components/dark-light-toggle";
 import { FMRSearch } from "@/components/fmr-search";
 import { FMRDataTable } from "@/components/fmr-data-table";
 import { CaretSortIcon } from "@radix-ui/react-icons";
-import { usCities } from "@/lib/api";
+import { usCities } from "@/lib/data";
 import { cn } from "@/lib/utils";
+import FurnishedFinderPage from "./pages/FurnishedFinder";
 
 export default function Home() {
   const { toast } = useToast();
@@ -57,7 +58,7 @@ export default function Home() {
   } = useListingStore();
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [searchType, setSearchType] = useState<"airbnb" | "property">("airbnb");
+  const [searchType, setSearchType] = useState<"airbnb" | "property" | "fmr" | "furnishedfinder">("airbnb");
   const [locationCity, setLocationCity] = useState("");
   const [propertyLoading, setPropertyLoading] = useState(false);
   const [propertyError, setPropertyError] = useState<string | null>(null);
@@ -154,18 +155,22 @@ export default function Home() {
             setSearchType(value as "airbnb" | "property")
           }
         >
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-3 mb-6">
+          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4 mb-6">
             <TabsTrigger value="airbnb">
               <FaAirbnb className=" mr-2" />
               Airbnb Listings
             </TabsTrigger>
             <TabsTrigger value="property">
               <IoHomeOutline className=" mr-2" />
-              Property Details
+              Realtor Details
             </TabsTrigger>
             <TabsTrigger value="fmr">
               <TbHomeDollar className=" mr-2" />
               HUD FMR
+            </TabsTrigger>
+            <TabsTrigger value="furnishedfinder">
+              <TbHomeDollar className=" mr-2" />
+              Furnished Finder
             </TabsTrigger>
           </TabsList>
 
@@ -330,6 +335,10 @@ export default function Home() {
               </div>
             </div>
           </TabsContent>
+
+         
+
+          <FurnishedFinderPage />
         </Tabs>
       </main>
     </div>

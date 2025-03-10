@@ -10,7 +10,7 @@ const client = new ApifyClient({
 export async function POST(request: Request) {
   try {
     // Get input parameters from request body
-    const { city, state, budget, moveInDate } = await request.json();
+    const { city, state } = await request.json();
 
     // Validate required parameters
     if (!city || !state) {
@@ -23,12 +23,12 @@ export async function POST(request: Request) {
     // Construct dynamic URL based on user input
     let url = `https://www.furnishedfinder.com/housing/${city}/${state}`;
 
-    if (budget) {
-      url += `/Budget${budget}`;
-    }
-    if (moveInDate) {
-      url += `/MoveIndate${moveInDate}`;
-    }
+    // if (budget) {
+    //   url += `/Budget${budget}`;
+    // }
+    // if (moveInDate) {
+    //   url += `/MoveIndate${moveInDate}`;
+    // }
     url += "/Avail"; // Append default availability parameter
 
     console.log(url);

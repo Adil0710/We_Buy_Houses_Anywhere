@@ -7,6 +7,7 @@ const nextConfig = {
       { hostname: "ap.rdcpix.com" },
       { hostname: "nh.rdcpix.com" },
       { hostname: "ar.rdcpix.com" },
+      { hostname: "www.furnishedfinder.com" },
     ],
   },
 };
