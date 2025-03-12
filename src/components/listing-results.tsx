@@ -31,6 +31,7 @@ import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { LayersControl } from "react-leaflet";
 
 // Dynamically import Leaflet components with no SSR
 const MapContainer = dynamic(
@@ -385,7 +386,26 @@ export default function ListingResults() {
                       zoom={zoom}
                       className="h-full w-full rounded-md"
                     >
-                      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                      <LayersControl position="topright">
+                        <LayersControl.BaseLayer checked name="OpenStreetMap">
+                          <TileLayer
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                          />
+                        </LayersControl.BaseLayer>
+                        <LayersControl.BaseLayer name="Satellite">
+                          <TileLayer
+                            attribution='&copy; <a href="https://www.esri.com">Esri</a>'
+                            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                          />
+                        </LayersControl.BaseLayer>
+                        <LayersControl.BaseLayer name="Terrain">
+                          <TileLayer
+                            attribution='&copy; <a href="https://www.opentopomap.org">OpenTopoMap</a>'
+                            url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
+                          />
+                        </LayersControl.BaseLayer>
+                      </LayersControl>
                       <Marker
                         position={[
                           listing.coordinates.latitude,
